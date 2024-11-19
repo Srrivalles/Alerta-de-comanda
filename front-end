@@ -1,0 +1,8 @@
+var socket = new SockJS('/ws');
+var stompClient = Stomp.over(socket);
+
+stompClient.connect({}, function(frame) {
+    stompClient.subscribe('/topic/mesa-chamada', function(message) {
+        alert(message.body); // Exibe uma notificação para o atendente
+    });
+});
