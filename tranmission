@@ -1,0 +1,35 @@
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/mesa")
+public class MesaController {
+
+    @Autowired
+    private MesaRepository mesaRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    // Rota para atualizar a mesa quando o cliente apertar o botão
+    @PostMapping("/chamar/{id}")
+    public String chamarAtendente(@PathVariable Long id) {
+        Mesa mesa = mesaRepository.findById(id);
+        if (mesa != null) {
+            mesa.setChamando(true);
+            mesa.setTempoChamada(System.currentTimeMillis());
+            mesaRepository.save(mesa);
+
+            // Envia uma mensagem para os atendentes via WebSocket
+            messagingTemplate.convertAndSend("/topic/mesa-chamada", "Mesa " + id + " está chamando.");
+            return "Mesa " + id + " chamou o atendente.";
+        } else {
+            return "Mesa não encontrada!";
+        }  }
+    // Rota para que os atendentes possam ver o status das mesas
+    @GetMapping("/status/{id}")
+    public boolean statusMesa(@PathVariable Long id) {
+        Mesa mesa = mesaRepository.findById(id);
+        return mesa != null && mesa.isChamando();
+    }}
